@@ -6,7 +6,6 @@
   <title>Minhas Finanças</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Biblioteca para conversão de HTML para PDF formatado -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     @media print {
@@ -192,12 +191,62 @@
 
     </div>
 
-    <!-- Extrato -->
-    <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-      <div class="flex justify-between items-center mb-4">
+    <!-- Extrato com Pesquisa, Filtros e Ordenação -->
+    <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
         <h2 class="text-base font-bold text-slate-800">Lançamentos do Mês</h2>
         <span id="contadorItens" class="text-xs text-slate-500">0 lançamentos</span>
       </div>
+
+      <!-- Barra de Pesquisa e Filtros -->
+      <div class="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+        <!-- Campo de Pesquisa por Texto -->
+        <div>
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Buscar por Nome / Descrição / Categoria</label>
+          <div class="relative">
+            <input type="text" id="campoBuscaTexto" oninput="renderizarInterface()" placeholder="Digite para buscar (ex: mercado, aluguel, pix)..."
+              class="w-full pl-8 pr-8 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
+            <button onclick="limparBuscaTexto()" title="Limpar busca" class="absolute right-2.5 top-1.5 text-slate-400 hover:text-slate-600 text-sm font-bold">
+              &times;
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros Rápidos e Ordenação -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Filtrar Fluxo</label>
+            <select id="filtroTipoFluxo" onchange="renderizarInterface()" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-indigo-500">
+              <option value="todos">Todos (Receitas e Despesas)</option>
+              <option value="receita">Apenas Receitas (+)</option>
+              <option value="despesa">Apenas Despesas (-)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Filtrar Modalidade</label>
+            <select id="filtroModalidade" onchange="renderizarInterface()" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-indigo-500">
+              <option value="todos">Todas as Modalidades</option>
+              <option value="unico">⚡ Apenas Únicos</option>
+              <option value="parcelado">🗓️ Apenas Parcelados</option>
+              <option value="recorrente">🔄 Apenas Recorrentes</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Ordenar por</label>
+            <select id="filtroOrdenacao" onchange="renderizarInterface()" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-indigo-500 font-medium">
+              <option value="data_desc">📅 Data (Mais recente primeiro)</option>
+              <option value="data_asc">📅 Data (Mais antiga primeiro)</option>
+              <option value="valor_asc">💲 Valor (Crescente: Menor ao Maior)</option>
+              <option value="valor_desc">💲 Valor (Decrescente: Maior ao Menor)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela de Lançamentos -->
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse text-sm">
           <thead>
@@ -256,11 +305,9 @@
     </div>
   </div>
 
-  <!-- Contêiner do Relatório para Impressão e PDF (Offscreen ou Formatado para Impressão) -->
+  <!-- Contêiner do Relatório para Impressão e PDF -->
   <div id="containerRelatorioPrint" class="hidden">
-    <div id="areaImpressaoRelatorio" class="p-8 bg-white text-slate-900 font-sans text-xs leading-relaxed max-w-[800px] mx-auto">
-      <!-- O conteúdo é injetado dinamicamente via JS antes da renderização do PDF -->
-    </div>
+    <div id="areaImpressaoRelatorio" class="p-8 bg-white text-slate-900 font-sans text-xs leading-relaxed max-w-[800px] mx-auto"></div>
   </div>
 
   <script>
@@ -455,60 +502,109 @@
       return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
+    function limparBuscaTexto() {
+      document.getElementById('campoBuscaTexto').value = '';
+      renderizarInterface();
+    }
+
     function renderizarInterface() {
       const mesFiltro = parseInt(document.getElementById('filtroMes').value);
       const anoFiltro = parseInt(document.getElementById('filtroAno').value);
 
-      const transacoesFiltradas = transacoes.filter(t => {
+      // Todos os lançamentos do mês selecionado
+      const transacoesMes = transacoes.filter(t => {
         const d = new Date(t.data + 'T00:00:00');
         return d.getMonth() === mesFiltro && d.getFullYear() === anoFiltro;
       });
-
-      transacoesFiltradas.sort((a, b) => new Date(b.data) - new Date(a.data));
-
-      const tabela = document.getElementById('tabelaTransacoes');
-      tabela.innerHTML = '';
 
       let receitas = 0;
       let despesas = 0;
       const gastosPorCategoria = {};
 
-      transacoesFiltradas.forEach(t => {
+      transacoesMes.forEach(t => {
         if (t.tipo === 'receita') {
           receitas += t.valor;
         } else {
           despesas += t.valor;
           gastosPorCategoria[t.categoria] = (gastosPorCategoria[t.categoria] || 0) + t.valor;
         }
-
-        let badgeTipo = '';
-        if (t.frequencia === 'parcelado') {
-          badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Parcelado</span>';
-        } else if (t.frequencia === 'recorrente') {
-          badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Recorrente</span>';
-        } else {
-          badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">Único</span>';
-        }
-
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-50 transition text-slate-700';
-        tr.innerHTML = `
-          <td class="py-2.5 px-3 text-xs text-slate-500 whitespace-nowrap">${t.data.split('-').reverse().join('/')}</td>
-          <td class="py-2.5 px-3 font-medium">${t.desc}</td>
-          <td class="py-2.5 px-3 whitespace-nowrap">${badgeTipo}</td>
-          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">${t.categoria}</span></td>
-          <td class="py-2.5 px-3 text-right font-semibold whitespace-nowrap ${t.tipo === 'receita' ? 'text-emerald-600' : 'text-rose-600'}">
-            ${t.tipo === 'receita' ? '+' : '-'} ${formatarMoeda(t.valor)}
-          </td>
-          <td class="py-2.5 px-3 text-center">
-            <button onclick="removerTransacao(${t.id}, ${t.groupId || 'null'})" title="Excluir lançamento" class="text-slate-400 hover:text-rose-600 font-bold px-2 py-1 text-sm transition">
-              &times;
-            </button>
-          </td>
-        `;
-        tabela.appendChild(tr);
       });
 
+      // Filtros do extrato
+      const filtroFluxo = document.getElementById('filtroTipoFluxo').value;
+      const filtroMod = document.getElementById('filtroModalidade').value;
+      const filtroOrd = document.getElementById('filtroOrdenacao').value;
+      const termoBusca = (document.getElementById('campoBuscaTexto').value || '').trim().toLowerCase();
+
+      let listaFiltrada = transacoesMes.filter(t => {
+        const matchFluxo = (filtroFluxo === 'todos') || (t.tipo === filtroFluxo);
+        const matchModalidade = (filtroMod === 'todos') || (t.frequencia === filtroMod);
+        
+        // Busca textual por descrição ou categoria
+        const descMatch = (t.desc || '').toLowerCase().includes(termoBusca);
+        const catMatch = (t.categoria || '').toLowerCase().includes(termoBusca);
+        const matchTexto = termoBusca === '' || descMatch || catMatch;
+
+        return matchFluxo && matchModalidade && matchTexto;
+      });
+
+      // Ordenação
+      listaFiltrada.sort((a, b) => {
+        if (filtroOrd === 'data_desc') {
+          return new Date(b.data) - new Date(a.data);
+        } else if (filtroOrd === 'data_asc') {
+          return new Date(a.data) - new Date(b.data);
+        } else if (filtroOrd === 'valor_asc') {
+          return a.valor - b.valor;
+        } else if (filtroOrd === 'valor_desc') {
+          return b.valor - a.valor;
+        }
+        return 0;
+      });
+
+      const tabela = document.getElementById('tabelaTransacoes');
+      tabela.innerHTML = '';
+
+      if (listaFiltrada.length === 0) {
+        tabela.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-6 text-center text-slate-400 text-xs">
+              Nenhum lançamento encontrado para os filtros e busca aplicados.
+            </td>
+          </tr>
+        `;
+      } else {
+        listaFiltrada.forEach(t => {
+          let badgeTipo = '';
+          if (t.frequencia === 'parcelado') {
+            badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Parcelado</span>';
+          } else if (t.frequencia === 'recorrente') {
+            badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Recorrente</span>';
+          } else {
+            badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">Único</span>';
+          }
+
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition text-slate-700';
+          tr.innerHTML = `
+            <td class="py-2.5 px-3 text-xs text-slate-500 whitespace-nowrap">${t.data.split('-').reverse().join('/')}</td>
+            <td class="py-2.5 px-3 font-medium">${t.desc}</td>
+            <td class="py-2.5 px-3 whitespace-nowrap">${badgeTipo}</td>
+            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">${t.categoria}</span></td>
+            <td class="py-2.5 px-3 text-right font-semibold whitespace-nowrap ${t.tipo === 'receita' ? 'text-emerald-600' : 'text-rose-600'}">
+              ${t.tipo === 'receita' ? '+' : '-'} ${formatarMoeda(t.valor)}
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <button onclick="removerTransacao(${t.id}, ${t.groupId || 'null'})" title="Excluir lançamento" class="text-slate-400 hover:text-rose-600 font-bold px-2 py-1 text-sm transition">
+                &times;
+              </button>
+            </td>
+          `;
+          tabela.appendChild(tr);
+        });
+      }
+
+      // Cards de Resumo do Mês
       const saldo = receitas - despesas;
       document.getElementById('totalReceitas').innerText = formatarMoeda(receitas);
       document.getElementById('totalDespesas').innerText = formatarMoeda(despesas);
@@ -517,7 +613,7 @@
       saldoEl.innerText = formatarMoeda(saldo);
       saldoEl.className = `text-2xl font-bold mt-1 ${saldo >= 0 ? 'text-slate-900' : 'text-rose-600'}`;
 
-      document.getElementById('contadorItens').innerText = `${transacoesFiltradas.length} ${transacoesFiltradas.length === 1 ? 'lançamento' : 'lançamentos'}`;
+      document.getElementById('contadorItens').innerText = `${listaFiltrada.length} de ${transacoesMes.length} lançamentos`;
 
       atualizarGrafico(gastosPorCategoria);
     }
@@ -570,7 +666,6 @@
       });
     }
 
-    // Funções do Modal e Geração de Relatório
     function abrirModalRelatorio() {
       document.getElementById('modalRelatorio').classList.remove('hidden');
     }
@@ -619,7 +714,6 @@
 
         htmlRelatorio = `
           <div style="font-family: Arial, sans-serif; color: #1e293b; padding: 20px;">
-            <!-- Cabeçalho -->
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px;">
               <div>
                 <h1 style="font-size: 20px; font-weight: bold; margin: 0; color: #4f46e5;">RELATÓRIO FINANCEIRO MENSAL</h1>
@@ -631,7 +725,6 @@
               </div>
             </div>
 
-            <!-- Resumo Financeiro / Balanço -->
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
               <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; text-align: center;">
                 <span style="font-size: 10px; font-weight: bold; color: #10b981; text-transform: uppercase;">Total de Receitas</span>
@@ -647,7 +740,6 @@
               </div>
             </div>
 
-            <!-- Despesas por Categoria -->
             <div style="margin-bottom: 24px;">
               <h2 style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #334155; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
                 Resumo de Gastos por Categoria
@@ -676,7 +768,6 @@
               </table>
             </div>
 
-            <!-- Tabela Detalhada de Transações -->
             <div>
               <h2 style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #334155; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
                 Extrato Analítico dos Lançamentos (${transacoesMes.length})
@@ -711,7 +802,6 @@
               </table>
             </div>
 
-            <!-- Rodapé Formal -->
             <div style="margin-top: 30px; border-top: 1px dashed #cbd5e1; padding-top: 10px; display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8;">
               <span>Documento gerado automaticamente pelo aplicativo Minhas Finanças</span>
               <span>Página 1 de 1</span>
@@ -719,7 +809,6 @@
           </div>
         `;
       } else {
-        // Relatório Consolidado Anual
         nomeArquivo = `Demonstrativo_Anual_${anoFiltro}.pdf`;
 
         const dadosMeses = [];
@@ -754,7 +843,6 @@
 
         htmlRelatorio = `
           <div style="font-family: Arial, sans-serif; color: #1e293b; padding: 20px;">
-            <!-- Cabeçalho -->
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px;">
               <div>
                 <h1 style="font-size: 20px; font-weight: bold; margin: 0; color: #4f46e5;">DEMONSTRATIVO ANUAL CONSOLIDADO</h1>
@@ -766,7 +854,6 @@
               </div>
             </div>
 
-            <!-- Resumo Anual -->
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
               <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; text-align: center;">
                 <span style="font-size: 10px; font-weight: bold; color: #10b981; text-transform: uppercase;">Receitas Acumuladas</span>
@@ -782,7 +869,6 @@
               </div>
             </div>
 
-            <!-- Tabela Mensal Consolidada -->
             <div>
               <h2 style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #334155; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
                 Detalhamento Mensal (Janeiro a Dezembro)
@@ -821,7 +907,6 @@
               </table>
             </div>
 
-            <!-- Rodapé Formal -->
             <div style="margin-top: 30px; border-top: 1px dashed #cbd5e1; padding-top: 10px; display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8;">
               <span>Documento gerado automaticamente pelo aplicativo Minhas Finanças</span>
               <span>Página 1 de 1</span>
@@ -833,7 +918,6 @@
       container.innerHTML = htmlRelatorio;
       fecharModalRelatorio();
 
-      // Configuração para geração exata de PDF em folha A4
       const opt = {
         margin: [10, 10, 10, 10],
         filename: nomeArquivo,
@@ -842,7 +926,6 @@
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      // Executa a conversão e dispara o download
       html2pdf().set(opt).from(container).save().then(() => {
         container.innerHTML = '';
       });
