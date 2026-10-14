@@ -21,10 +21,34 @@
 
   <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
 
-    <!-- Cards de Resumo -->
+    <!-- Seletor de Período (Mês e Ano) -->
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <span class="text-sm font-semibold text-slate-700">Filtrar período do Painel e Extrato:</span>
+      <div class="flex items-center gap-2">
+        <select id="filtroMes" onchange="renderizarInterface()" class="px-3 py-1.5 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500">
+          <option value="0">Janeiro</option>
+          <option value="1">Fevereiro</option>
+          <option value="2">Março</option>
+          <option value="3">Abril</option>
+          <option value="4">Maio</option>
+          <option value="5">Junho</option>
+          <option value="6">Julho</option>
+          <option value="7">Agosto</option>
+          <option value="8">Setembro</option>
+          <option value="9">Outubro</option>
+          <option value="10">Novembro</option>
+          <option value="11">Dezembro</option>
+        </select>
+        <select id="filtroAno" onchange="renderizarInterface()" class="px-3 py-1.5 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500">
+          <!-- Anos gerados via JS -->
+        </select>
+      </div>
+    </div>
+
+    <!-- Cards de Resumo do Mês Selecionado -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Saldo Atual</span>
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Balanço do Mês</span>
         <p id="saldoTotal" class="text-2xl font-bold mt-1 text-slate-900">R$ 0,00</p>
       </div>
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
@@ -46,43 +70,79 @@
         <form id="formTransacao" class="space-y-4">
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">Descrição</label>
-            <input type="text" id="desc" placeholder="Ex: Mercado, Salário" required
+            <input type="text" id="desc" placeholder="Ex: Mercado, Internet, Notebook" required
               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+          </div>
+
+          <!-- Linha: Tipo de Fluxo e Modalidade de Pagamento -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Fluxo</label>
+              <select id="tipo" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                <option value="despesa">Despesa (-)</option>
+                <option value="receita">Receita (+)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Tipo de Gasto</label>
+              <select id="frequencia" onchange="ajustarCamposFrequencia()" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white font-medium">
+                <option value="unico">⚡ Pagamento Único</option>
+                <option value="parcelado">🗓️ Programado / Parcelado</option>
+                <option value="recorrente">🔄 Recorrente (Fixo/Assinatura)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Campos dinâmicos de Parcelamento / Recorrência -->
+          <div id="campoParcelas" class="hidden grid grid-cols-2 gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+            <div>
+              <label class="block text-xs font-medium text-amber-900 mb-1">Nº de Parcelas</label>
+              <input type="number" id="numParcelas" min="2" max="72" value="2"
+                class="w-full px-3 py-1.5 border rounded-lg text-sm bg-white focus:outline-none">
+            </div>
+            <div class="flex items-center text-xs text-amber-800 pt-4">
+              O valor abaixo será dividido mensalmente.
+            </div>
+          </div>
+
+          <div id="campoRecorrencia" class="hidden grid grid-cols-2 gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div>
+              <label class="block text-xs font-medium text-blue-900 mb-1">Projetar por (Meses)</label>
+              <input type="number" id="mesesRecorrencia" min="1" max="36" value="12"
+                class="w-full px-3 py-1.5 border rounded-lg text-sm bg-white focus:outline-none">
+            </div>
+            <div class="flex items-center text-xs text-blue-800 pt-4">
+              Lançamento repetido todo mês no mesmo dia.
+            </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">Valor (R$)</label>
+              <label id="labelValor" class="block text-xs font-medium text-slate-600 mb-1">Valor Total (R$)</label>
               <input type="number" id="valor" step="0.01" min="0.01" placeholder="0,00" required
                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">Tipo</label>
-              <select id="tipo" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm bg-white">
-                <option value="despesa">Despesa</option>
-                <option value="receita">Receita</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">Categoria</label>
-              <select id="categoria" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm bg-white">
-                <option value="Alimentação">Alimentação</option>
-                <option value="Moradia">Moradia</option>
-                <option value="Transporte">Transporte</option>
-                <option value="Lazer">Lazer</option>
-                <option value="Saúde">Saúde</option>
-                <option value="Salário">Salário</option>
-                <option value="Outros">Outros</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">Data</label>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Data (ou 1ª Parcela)</label>
               <input type="date" id="data" required
                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
             </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Categoria</label>
+            <select id="categoria" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+              <option value="Moradia">Moradia</option>
+              <option value="Contas & Serviços">Contas & Serviços (Luz, Internet, Água)</option>
+              <option value="Alimentação">Alimentação</option>
+              <option value="Assinaturas">Assinaturas & Streaming</option>
+              <option value="Transporte">Transporte</option>
+              <option value="Lazer">Lazer</option>
+              <option value="Saúde">Saúde</option>
+              <option value="Compras">Compras & Eletrônicos</option>
+              <option value="Salário">Salário / Renda</option>
+              <option value="Outros">Outros</option>
+            </select>
           </div>
 
           <button type="submit"
@@ -92,9 +152,9 @@
         </form>
       </section>
 
-      <!-- Gráfico de Gastos -->
+      <!-- Gráfico de Gastos do Mês -->
       <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
-        <h2 class="text-base font-bold text-slate-800 mb-2 w-full text-left">Distribuição de Despesas</h2>
+        <h2 class="text-base font-bold text-slate-800 mb-2 w-full text-left">Distribuição das Despesas (Mês)</h2>
         <div class="w-full h-56 flex items-center justify-center">
           <canvas id="graficoCategorias"></canvas>
         </div>
@@ -105,7 +165,7 @@
     <!-- Extrato -->
     <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-base font-bold text-slate-800">Histórico de Transações</h2>
+        <h2 class="text-base font-bold text-slate-800">Lançamentos do Mês</h2>
         <span id="contadorItens" class="text-xs text-slate-500">0 lançamentos</span>
       </div>
       <div class="overflow-x-auto">
@@ -114,6 +174,7 @@
             <tr class="border-b text-slate-500 font-semibold text-xs">
               <th class="py-2 px-3">Data</th>
               <th class="py-2 px-3">Descrição</th>
+              <th class="py-2 px-3">Tipo</th>
               <th class="py-2 px-3">Categoria</th>
               <th class="py-2 px-3 text-right">Valor</th>
               <th class="py-2 px-3 text-center">Ação</th>
@@ -129,34 +190,124 @@
   </main>
 
   <script>
-    // Inicialização do estado
     let transacoes = JSON.parse(localStorage.getItem('financas_app_dados')) || [];
     let meuGrafico = null;
 
-    // Data de hoje como padrão no formulário
-    document.getElementById('data').valueAsDate = new Date();
+    // Inicialização de datas e seletores
+    const hoje = new Date();
+    document.getElementById('data').valueAsDate = hoje;
 
+    const selectAno = document.getElementById('filtroAno');
+    const anoAtual = hoje.getFullYear();
+    for (let a = anoAtual - 2; a <= anoAtual + 3; a++) {
+      const opt = document.createElement('option');
+      opt.value = a;
+      opt.innerText = a;
+      if (a === anoAtual) opt.selected = true;
+      selectAno.appendChild(opt);
+    }
+    document.getElementById('filtroMes').value = hoje.getMonth();
+
+    function ajustarCamposFrequencia() {
+      const freq = document.getElementById('frequencia').value;
+      const campoParcelas = document.getElementById('campoParcelas');
+      const campoRecorrencia = document.getElementById('campoRecorrencia');
+      const labelValor = document.getElementById('labelValor');
+
+      campoParcelas.classList.add('hidden');
+      campoRecorrencia.classList.add('hidden');
+
+      if (freq === 'parcelado') {
+        campoParcelas.classList.remove('hidden');
+        labelValor.innerText = 'Valor Total da Compra (R$)';
+      } else if (freq === 'recorrente') {
+        campoRecorrencia.classList.remove('hidden');
+        labelValor.innerText = 'Valor Mensal (R$)';
+      } else {
+        labelValor.innerText = 'Valor (R$)';
+      }
+    }
+
+    // Formulário de Cadastro
     const form = document.getElementById('formTransacao');
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const novaTransacao = {
-        id: Date.now(),
-        desc: document.getElementById('desc').value.trim(),
-        valor: parseFloat(document.getElementById('valor').value),
-        tipo: document.getElementById('tipo').value,
-        categoria: document.getElementById('categoria').value,
-        data: document.getElementById('data').value
-      };
+      const descBase = document.getElementById('desc').value.trim();
+      const valorTotal = parseFloat(document.getElementById('valor').value);
+      const tipo = document.getElementById('tipo').value;
+      const frequencia = document.getElementById('frequencia').value;
+      const categoria = document.getElementById('categoria').value;
+      const dataStr = document.getElementById('data').value;
+      
+      const groupId = Date.now(); // Vincula faturas/parcelas do mesmo grupo
+      const partesData = dataStr.split('-');
+      const anoOrig = parseInt(partesData[0]);
+      const mesOrig = parseInt(partesData[1]) - 1; // 0 indexado
+      const diaOrig = parseInt(partesData[2]);
 
-      transacoes.unshift(novaTransacao);
+      if (frequencia === 'unico') {
+        transacoes.unshift({
+          id: Date.now(),
+          desc: descBase,
+          valor: valorTotal,
+          tipo,
+          frequencia,
+          categoria,
+          data: dataStr
+        });
+      } else if (frequencia === 'parcelado') {
+        const parcelas = parseInt(document.getElementById('numParcelas').value) || 2;
+        const valorParcela = parseFloat((valorTotal / parcelas).toFixed(2));
+
+        for (let i = 0; i < parcelas; i++) {
+          const d = new Date(anoOrig, mesOrig + i, diaOrig);
+          transacoes.push({
+            id: Date.now() + i,
+            groupId,
+            desc: `${descBase} (${i + 1}/${parcelas})`,
+            valor: valorParcela,
+            tipo,
+            frequencia,
+            categoria,
+            data: d.toISOString().split('T')[0]
+          });
+        }
+      } else if (frequencia === 'recorrente') {
+        const meses = parseInt(document.getElementById('mesesRecorrencia').value) || 12;
+
+        for (let i = 0; i < meses; i++) {
+          const d = new Date(anoOrig, mesOrig + i, diaOrig);
+          transacoes.push({
+            id: Date.now() + i,
+            groupId,
+            desc: descBase,
+            valor: valorTotal,
+            tipo,
+            frequencia,
+            categoria,
+            data: d.toISOString().split('T')[0]
+          });
+        }
+      }
+
       salvarEAtualizar();
       form.reset();
       document.getElementById('data').valueAsDate = new Date();
+      ajustarCamposFrequencia();
     });
 
-    function removerTransacao(id) {
-      transacoes = transacoes.filter(t => t.id !== id);
+    function removerTransacao(id, groupId) {
+      if (groupId) {
+        const opcao = confirm("Essa transação faz parte de um grupo recorrente/parcelado.\n\nClique em OK para excluir TODAS as parcelas/faturas deste grupo, ou CANCELAR para excluir apenas esta.");
+        if (opcao) {
+          transacoes = transacoes.filter(t => t.groupId !== groupId);
+        } else {
+          transacoes = transacoes.filter(t => t.id !== id);
+        }
+      } else {
+        transacoes = transacoes.filter(t => t.id !== id);
+      }
       salvarEAtualizar();
     }
 
@@ -177,6 +328,18 @@
     }
 
     function renderizarInterface() {
+      const mesFiltro = parseInt(document.getElementById('filtroMes').value);
+      const anoFiltro = parseInt(document.getElementById('filtroAno').value);
+
+      // Filtrar lançamentos para o mês/ano selecionado
+      const transacoesFiltradas = transacoes.filter(t => {
+        const d = new Date(t.data + 'T00:00:00');
+        return d.getMonth() === mesFiltro && d.getFullYear() === anoFiltro;
+      });
+
+      // Ordenar por data (mais recentes primeiro)
+      transacoesFiltradas.sort((a, b) => new Date(b.data) - new Date(a.data));
+
       const tabela = document.getElementById('tabelaTransacoes');
       tabela.innerHTML = '';
 
@@ -184,7 +347,7 @@
       let despesas = 0;
       const gastosPorCategoria = {};
 
-      transacoes.forEach(t => {
+      transacoesFiltradas.forEach(t => {
         if (t.tipo === 'receita') {
           receitas += t.valor;
         } else {
@@ -192,17 +355,28 @@
           gastosPorCategoria[t.categoria] = (gastosPorCategoria[t.categoria] || 0) + t.valor;
         }
 
+        // Tag da frequência
+        let badgeTipo = '';
+        if (t.frequencia === 'parcelado') {
+          badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Parcelado</span>';
+        } else if (t.frequencia === 'recorrente') {
+          badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Recorrente</span>';
+        } else {
+          badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">Único</span>';
+        }
+
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 transition text-slate-700';
         tr.innerHTML = `
           <td class="py-2.5 px-3 text-xs text-slate-500 whitespace-nowrap">${t.data.split('-').reverse().join('/')}</td>
           <td class="py-2.5 px-3 font-medium">${t.desc}</td>
+          <td class="py-2.5 px-3 whitespace-nowrap">${badgeTipo}</td>
           <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">${t.categoria}</span></td>
           <td class="py-2.5 px-3 text-right font-semibold whitespace-nowrap ${t.tipo === 'receita' ? 'text-emerald-600' : 'text-rose-600'}">
             ${t.tipo === 'receita' ? '+' : '-'} ${formatarMoeda(t.valor)}
           </td>
           <td class="py-2.5 px-3 text-center">
-            <button onclick="removerTransacao(${t.id})" class="text-slate-400 hover:text-rose-600 font-bold px-2 py-1 text-sm transition">
+            <button onclick="removerTransacao(${t.id}, ${t.groupId || 'null'})" title="Excluir lançamento" class="text-slate-400 hover:text-rose-600 font-bold px-2 py-1 text-sm transition">
               &times;
             </button>
           </td>
@@ -210,7 +384,7 @@
         tabela.appendChild(tr);
       });
 
-      // Atualiza Cards
+      // Atualiza Cards de Resumo
       const saldo = receitas - despesas;
       document.getElementById('totalReceitas').innerText = formatarMoeda(receitas);
       document.getElementById('totalDespesas').innerText = formatarMoeda(despesas);
@@ -219,7 +393,7 @@
       saldoEl.innerText = formatarMoeda(saldo);
       saldoEl.className = `text-2xl font-bold mt-1 ${saldo >= 0 ? 'text-slate-900' : 'text-rose-600'}`;
 
-      document.getElementById('contadorItens').innerText = `${transacoes.length} ${transacoes.length === 1 ? 'lançamento' : 'lançamentos'}`;
+      document.getElementById('contadorItens').innerText = `${transacoesFiltradas.length} ${transacoesFiltradas.length === 1 ? 'lançamento' : 'lançamentos'}`;
 
       // Atualiza Gráfico
       atualizarGrafico(gastosPorCategoria);
@@ -239,7 +413,7 @@
         meuGrafico = new Chart(ctx, {
           type: 'doughnut',
           data: {
-            labels: ['Sem despesas'],
+            labels: ['Sem despesas no mês'],
             datasets: [{ data: [1], backgroundColor: ['#E2E8F0'] }]
           },
           options: {
@@ -259,7 +433,7 @@
             data: data,
             backgroundColor: [
               '#EF4444', '#3B82F6', '#10B981', '#F59E0B', 
-              '#8B5CF6', '#EC4899', '#6B7280'
+              '#8B5CF6', '#EC4899', '#14B8A6', '#6366F1', '#6B7280'
             ]
           }]
         },
@@ -273,7 +447,8 @@
       });
     }
 
-    // Renderização inicial ao abrir a página
+    // Inicialização
+    ajustarCamposFrequencia();
     renderizarInterface();
   </script>
 </body>
