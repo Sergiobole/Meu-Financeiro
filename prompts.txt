@@ -1,0 +1,15 @@
+(Recomendado) Refatorar e polir no Front-end:
+Corrigir bugs (XSS, datas no fim do mês, centavos),
+modularizar o código e adicionar melhorias
+visuais/PWA.
+
+Migrar para Full-Stack PHP + MySQL: Criar banco de
+dados no XAMPP, sistema de login/usuários e
+API/backend em PHP.
+
+Adicionar novas funcionalidades ao app atual:
+Metas de orçamento, gráficos adicionais (evolução
+mensal) e modo escuro.
+
+Apenas tire dúvidas sobre o funcionamento do
+código atual.

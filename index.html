@@ -3,211 +3,337 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minhas Finanças</title>
+  <meta name="description" content="Minhas Finanças - Controle financeiro pessoal leve, seguro e direto no seu navegador com suporte offline e relatórios em PDF.">
+  <meta name="theme-color" content="#4f46e5">
+
+  <title>Minhas Finanças • Controle Pessoal</title>
+
+  <!-- PWA & Ícones -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+
+  <!-- Estilos Customizados -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Tailwind CSS & Bibliotecas Externas -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    };
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <style>
-    @media print {
-      body * {
-        visibility: hidden;
-      }
-      #areaImpressaoRelatorio, #areaImpressaoRelatorio * {
-        visibility: visible;
-      }
-      #areaImpressaoRelatorio {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-      }
-    }
-  </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-12">
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased min-h-screen pb-16 transition-colors duration-200">
 
-  <!-- Top Bar -->
-  <header class="bg-indigo-600 text-white shadow">
-    <div class="max-w-4xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-      <h1 class="text-xl font-bold tracking-tight">💰 Finanças Pessoais</h1>
+  <!-- Barra Superior / Header -->
+  <header class="bg-indigo-600 dark:bg-slate-900 border-b border-indigo-700 dark:border-slate-800 text-white shadow-md sticky top-0 z-30 transition-colors">
+    <div class="max-w-5xl mx-auto px-4 py-3.5 flex flex-wrap justify-between items-center gap-3">
+      
+      <!-- Marca do App -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-white/10 dark:bg-indigo-600/30 border border-white/20 dark:border-indigo-500/30 flex items-center justify-center p-1.5 shadow-inner">
+          <img src="icons/icon.svg" alt="Logo" class="w-full h-full object-contain">
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Minhas Finanças
+          </h1>
+          <p class="text-[11px] text-indigo-200 dark:text-slate-400 font-medium">Controle Pessoal Inteligente</p>
+        </div>
+      </div>
+
+      <!-- Barra de Ações Rápidas -->
       <div class="flex items-center flex-wrap gap-2">
-        <button onclick="abrirModalRelatorio()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded transition font-medium flex items-center gap-1 shadow-sm">
-          📄 Gerar Relatório PDF
+        
+        <!-- Botão Instalar App (PWA) -->
+        <button id="btnInstalarPwa" class="hidden text-xs bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold px-3 py-1.5 rounded-xl transition shadow-sm flex items-center gap-1.5 animate-pulse">
+          📲 Instalar App
         </button>
-        <button onclick="exportarBackup()" class="text-xs bg-indigo-500 hover:bg-indigo-400 px-3 py-1.5 rounded transition font-medium flex items-center gap-1">
-          📥 Backup
+
+        <!-- Botão Alternar Modo Escuro -->
+        <button id="btnToggleTheme" class="text-sm bg-white/10 hover:bg-white/20 dark:bg-slate-800 dark:hover:bg-slate-700 text-white p-2 rounded-xl transition font-medium flex items-center justify-center shadow-sm" title="Alternar Modo Escuro">
+          🌙
         </button>
-        <label class="text-xs bg-indigo-500 hover:bg-indigo-400 px-3 py-1.5 rounded transition font-medium cursor-pointer flex items-center gap-1">
-          📤 Restaurar
-          <input type="file" id="inputImportar" accept=".json" class="hidden" onchange="importarBackup(event)">
+
+        <!-- Relatório PDF -->
+        <button id="btnAbrirRelatorio" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl transition font-semibold flex items-center gap-1.5 shadow-sm shadow-emerald-900/20">
+          <span>📄</span> Relatório PDF
+        </button>
+
+        <!-- Backup -->
+        <button id="btnExportarBackup" class="text-xs bg-white/10 hover:bg-white/20 dark:bg-slate-800 dark:hover:bg-slate-700 text-white px-3 py-2 rounded-xl transition font-medium flex items-center gap-1.5">
+          <span>📥</span> Backup
+        </button>
+
+        <!-- Restaurar -->
+        <label class="text-xs bg-white/10 hover:bg-white/20 dark:bg-slate-800 dark:hover:bg-slate-700 text-white px-3 py-2 rounded-xl transition font-medium cursor-pointer flex items-center gap-1.5">
+          <span>📤</span> Restaurar
+          <input type="file" id="inputImportar" accept=".json" class="hidden">
         </label>
-        <button onclick="limparTudo()" class="text-xs bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded transition font-medium">
+
+        <!-- Resetar -->
+        <button id="btnResetar" class="text-xs bg-rose-600/80 hover:bg-rose-600 text-white px-2.5 py-2 rounded-xl transition font-medium" title="Zerar todos os lançamentos">
           Resetar
         </button>
+
       </div>
     </div>
   </header>
 
-  <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
+  <!-- Conteúdo Principal -->
+  <main class="max-w-5xl mx-auto px-4 mt-6 space-y-6">
 
-    <!-- Seletor de Período -->
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-      <span class="text-sm font-semibold text-slate-700">Filtrar período do Painel e Extrato:</span>
-      <div class="flex items-center gap-2">
-        <select id="filtroMes" onchange="renderizarInterface()" class="px-3 py-1.5 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500">
-          <option value="0">Janeiro</option>
-          <option value="1">Fevereiro</option>
-          <option value="2">Março</option>
-          <option value="3">Abril</option>
-          <option value="4">Maio</option>
-          <option value="5">Junho</option>
-          <option value="6">Julho</option>
-          <option value="7">Agosto</option>
-          <option value="8">Setembro</option>
-          <option value="9">Outubro</option>
-          <option value="10">Novembro</option>
-          <option value="11">Dezembro</option>
-        </select>
-        <select id="filtroAno" onchange="renderizarInterface()" class="px-3 py-1.5 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500">
-          <!-- Anos gerados via JS -->
-        </select>
+    <!-- Barra de Período e Indicador de Saúde Financeira -->
+    <div class="card-glass p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm">
+          📅
+        </div>
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Competência Analisada</span>
+          <div class="flex items-center gap-2 mt-1">
+            <select id="filtroMes" class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <option value="0">Janeiro</option>
+              <option value="1">Fevereiro</option>
+              <option value="2">Março</option>
+              <option value="3">Abril</option>
+              <option value="4">Maio</option>
+              <option value="5">Junho</option>
+              <option value="6">Julho</option>
+              <option value="7">Agosto</option>
+              <option value="8">Setembro</option>
+              <option value="9">Outubro</option>
+              <option value="10">Novembro</option>
+              <option value="11">Dezembro</option>
+            </select>
+            <select id="filtroAno" class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <!-- Preenchido dinamicamente via JS -->
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Badge de Status Financeiro -->
+      <div class="flex items-center gap-2 self-start sm:self-center">
+        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Balanço do Mês:</span>
+        <div id="statusIndicador" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          <span>⚖️</span> <span>Neutro</span>
+        </div>
       </div>
     </div>
 
-    <!-- Cards de Resumo -->
+    <!-- Cards de Resumo do Balanço -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Balanço do Mês</span>
-        <p id="saldoTotal" class="text-2xl font-bold mt-1 text-slate-900">R$ 0,00</p>
+      
+      <!-- Card Balanço Líquido -->
+      <div class="card-glass p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800/80 relative overflow-hidden group hover:shadow-md transition">
+        <div class="flex justify-between items-start">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Saldo Líquido</span>
+          <span class="text-lg p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">💰</span>
+        </div>
+        <p id="saldoTotal" class="text-2xl sm:text-3xl font-extrabold mt-2 text-slate-900 dark:text-white">R$ 0,00</p>
+        <span class="text-[11px] text-slate-400 mt-1 block">Receitas menos Despesas</span>
       </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Receitas</span>
-        <p id="totalReceitas" class="text-2xl font-bold mt-1 text-emerald-600">R$ 0,00</p>
+
+      <!-- Card Receitas -->
+      <div class="card-glass p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800/80 relative overflow-hidden group hover:shadow-md transition">
+        <div class="flex justify-between items-start">
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Receitas (+)</span>
+          <span class="text-lg p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">📈</span>
+        </div>
+        <p id="totalReceitas" class="text-2xl sm:text-3xl font-extrabold mt-2 text-emerald-600 dark:text-emerald-400">R$ 0,00</p>
+        <span class="text-[11px] text-slate-400 mt-1 block">Entradas no período</span>
       </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <span class="text-xs font-semibold uppercase tracking-wider text-rose-600">Despesas</span>
-        <p id="totalDespesas" class="text-2xl font-bold mt-1 text-rose-600">R$ 0,00</p>
+
+      <!-- Card Despesas -->
+      <div class="card-glass p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800/80 relative overflow-hidden group hover:shadow-md transition">
+        <div class="flex justify-between items-start">
+          <span class="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Despesas (-)</span>
+          <span class="text-lg p-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">📉</span>
+        </div>
+        <p id="totalDespesas" class="text-2xl sm:text-3xl font-extrabold mt-2 text-rose-600 dark:text-rose-400">R$ 0,00</p>
+        <span class="text-[11px] text-slate-400 mt-1 block">Saídas acumuladas</span>
       </div>
+
     </div>
 
-    <!-- Grid: Formulário + Gráfico -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Grid: Formulário de Lançamento + Gráfico de Despesas -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
-      <!-- Formulário de Transação -->
-      <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-        <h2 class="text-base font-bold text-slate-800 mb-4">Adicionar Transação</h2>
+      <!-- Formulário de Transação (7 colunas) -->
+      <section class="lg:col-span-7 card-glass p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800/80">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl p-2 rounded-xl bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400">✍️</span>
+            <div>
+              <h2 class="text-base font-bold text-slate-900 dark:text-white">Novo Lançamento</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Cadastre gastos pontuais, parcelados ou fixos</p>
+            </div>
+          </div>
+        </div>
+
         <form id="formTransacao" class="space-y-4">
+          <!-- Descrição -->
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Descrição</label>
-            <input type="text" id="desc" placeholder="Ex: Mercado, Internet, Salário" required
-              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Descrição</label>
+            <input type="text" id="desc" placeholder="Ex: Supermercado, Aluguel, Salário, Internet" required maxlength="120"
+              class="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm transition">
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <!-- Fluxo e Frequência -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">Fluxo</label>
-              <select id="tipo" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
-                <option value="despesa">Despesa (-)</option>
-                <option value="receita">Receita (+)</option>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Fluxo de Caixa</label>
+              <select id="tipo" class="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-indigo-500 text-sm">
+                <option value="despesa">🔴 Despesa (-)</option>
+                <option value="receita">🟢 Receita (+)</option>
               </select>
             </div>
+
             <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">Tipo de Gasto</label>
-              <select id="frequencia" onchange="ajustarCamposFrequencia()" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white font-medium">
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Tipo de Movimentação</label>
+              <select id="frequencia" class="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-indigo-500 text-sm">
                 <option value="unico">⚡ Pagamento Único</option>
-                <option value="parcelado">🗓️ Programado / Parcelado</option>
-                <option value="recorrente">🔄 Recorrente (Fixo/Assinatura)</option>
+                <option value="parcelado">🗓️ Compra Parcelada</option>
+                <option value="recorrente">🔄 Gasto Recorrente (Assinatura / Fixo)</option>
               </select>
             </div>
           </div>
 
-          <div id="campoParcelas" class="hidden grid grid-cols-2 gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+          <!-- Campos Condicionais: Parcelamento -->
+          <div id="campoParcelas" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-900/60 animate-slideUp">
             <div>
-              <label class="block text-xs font-medium text-amber-900 mb-1">Nº de Parcelas</label>
+              <label class="block text-xs font-bold text-amber-900 dark:text-amber-300 mb-1">Nº de Parcelas</label>
               <input type="number" id="numParcelas" min="2" max="72" value="2"
-                class="w-full px-3 py-1.5 border rounded-lg text-sm bg-white focus:outline-none">
+                class="w-full px-3 py-2 border border-amber-300 dark:border-amber-800 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-bold focus:outline-none">
             </div>
-            <div class="flex items-center text-xs text-amber-800 pt-4">
-              Valor total rateado nos meses seguintes.
-            </div>
-          </div>
-
-          <div id="campoRecorrencia" class="hidden grid grid-cols-2 gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <div>
-              <label class="block text-xs font-medium text-blue-900 mb-1">Projetar por (Meses)</label>
-              <input type="number" id="mesesRecorrencia" min="1" max="36" value="12"
-                class="w-full px-3 py-1.5 border rounded-lg text-sm bg-white focus:outline-none">
-            </div>
-            <div class="flex items-center text-xs text-blue-800 pt-4">
-              Lançamento fixo mensal recorrente.
+            <div class="flex items-center text-[11px] text-amber-800 dark:text-amber-400 pt-1 leading-snug">
+              O valor total será rateado mês a mês com ajuste exato de centavos.
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <!-- Campos Condicionais: Recorrência -->
+          <div id="campoRecorrencia" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-sky-50 dark:bg-sky-950/30 rounded-xl border border-sky-200 dark:border-sky-900/60 animate-slideUp">
             <div>
-              <label id="labelValor" class="block text-xs font-medium text-slate-600 mb-1">Valor (R$)</label>
-              <input type="number" id="valor" step="0.01" min="0.01" placeholder="0,00" required
-                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+              <label class="block text-xs font-bold text-sky-900 dark:text-sky-300 mb-1">Projetar por (Meses)</label>
+              <input type="number" id="mesesRecorrencia" min="1" max="60" value="12"
+                class="w-full px-3 py-2 border border-sky-300 dark:border-sky-800 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-bold focus:outline-none">
             </div>
+            <div class="flex items-center text-[11px] text-sky-800 dark:text-sky-400 pt-1 leading-snug">
+              Lançamento fixo mensal replicado com virada segura no fim de cada mês.
+            </div>
+          </div>
+
+          <!-- Valor e Data -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">Data (ou 1ª Parcela)</label>
+              <label id="labelValor" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Valor (R$)</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-2.5 text-slate-400 text-sm font-semibold">R$</span>
+                <input type="number" id="valor" step="0.01" min="0.01" placeholder="0,00" required
+                  class="w-full pl-10 pr-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-bold text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none transition">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Data (ou 1ª Parcela)</label>
               <input type="date" id="data" required
-                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                class="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none transition">
             </div>
           </div>
 
+          <!-- Categoria -->
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Categoria</label>
-            <select id="categoria" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
-              <option value="Moradia">Moradia</option>
-              <option value="Contas & Serviços">Contas & Serviços (Luz, Água, Net)</option>
-              <option value="Alimentação">Alimentação</option>
-              <option value="Assinaturas">Assinaturas & Streaming</option>
-              <option value="Transporte">Transporte</option>
-              <option value="Lazer">Lazer</option>
-              <option value="Saúde">Saúde</option>
-              <option value="Compras">Compras & Eletrônicos</option>
-              <option value="Salário">Salário / Renda</option>
-              <option value="Outros">Outros</option>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Categoria</label>
+            <select id="categoria" class="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm focus:ring-2 focus:ring-indigo-500 font-medium">
+              <option value="Moradia">🏠 Moradia (Aluguel, Condomínio)</option>
+              <option value="Contas & Serviços">⚡ Contas & Serviços (Luz, Água, Gás, Net)</option>
+              <option value="Alimentação">🍔 Alimentação (Supermercado, Delivery)</option>
+              <option value="Assinaturas">🎬 Assinaturas & Streaming (Netflix, Spotify)</option>
+              <option value="Transporte">🚗 Transporte (Combustível, Uber, Ônibus)</option>
+              <option value="Lazer">🏖️ Lazer & Viagens</option>
+              <option value="Saúde">🩺 Saúde & Farmácia</option>
+              <option value="Compras">🛍️ Compras & Eletrônicos</option>
+              <option value="Salário">💼 Salário / Renda Principal</option>
+              <option value="Outros">📌 Outros Lançamentos</option>
             </select>
           </div>
 
           <button type="submit"
-            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm transition">
-            Registrar Lançamento
+            class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2">
+            <span>✨</span> Registrar Lançamento
           </button>
         </form>
       </section>
 
-      <!-- Gráfico de Gastos do Mês -->
-      <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
-        <h2 class="text-base font-bold text-slate-800 mb-2 w-full text-left">Distribuição das Despesas (Mês)</h2>
-        <div class="w-full h-56 flex items-center justify-center">
+      <!-- Gráfico de Gastos por Categoria (5 colunas) -->
+      <section class="lg:col-span-5 card-glass p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800/80 flex flex-col items-center justify-between">
+        <div class="w-full flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xl p-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">📊</span>
+            <div>
+              <h2 class="text-base font-bold text-slate-900 dark:text-white">Gastos do Mês</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Distribuição percentual por categoria</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="w-full h-64 sm:h-72 flex items-center justify-center my-auto relative">
           <canvas id="graficoCategorias"></canvas>
         </div>
       </section>
 
     </div>
 
-    <!-- Extrato com Pesquisa, Filtros e Ordenação -->
-    <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
-      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-        <h2 class="text-base font-bold text-slate-800">Lançamentos do Mês</h2>
-        <span id="contadorItens" class="text-xs text-slate-500">0 lançamentos</span>
+    <!-- Extrato Detalhado com Barra de Busca e Filtros -->
+    <section class="card-glass p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800/80 space-y-4">
+      
+      <!-- Cabeçalho do Extrato -->
+      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xl p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">📋</span>
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-white">Extrato de Movimentações</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Histórico de receitas e despesas do período</p>
+          </div>
+        </div>
+        <span id="contadorItens" class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 self-start sm:self-center">
+          0 lançamentos
+        </span>
       </div>
 
       <!-- Barra de Pesquisa e Filtros -->
-      <div class="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-        <!-- Campo de Pesquisa por Texto -->
+      <div class="space-y-3 p-4 bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-xl">
+        <!-- Busca Textual -->
         <div>
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Buscar por Nome / Descrição / Categoria</label>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+            Pesquisar por Descrição ou Categoria
+          </label>
           <div class="relative">
-            <input type="text" id="campoBuscaTexto" oninput="renderizarInterface()" placeholder="Digite para buscar (ex: mercado, aluguel, pix)..."
-              class="w-full pl-8 pr-8 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-            <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
-            <button onclick="limparBuscaTexto()" title="Limpar busca" class="absolute right-2.5 top-1.5 text-slate-400 hover:text-slate-600 text-sm font-bold">
+            <input type="text" id="campoBuscaTexto" placeholder="Digite para filtrar (ex: supermercado, aluguel, pix)..."
+              class="w-full pl-9 pr-9 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition">
+            <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+            <button id="btnLimparBusca" title="Limpar busca" class="absolute right-3 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-base font-bold">
               &times;
             </button>
           </div>
@@ -216,8 +342,8 @@
         <!-- Filtros Rápidos e Ordenação -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Filtrar Fluxo</label>
-            <select id="filtroTipoFluxo" onchange="renderizarInterface()" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-indigo-500">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Filtrar Fluxo</label>
+            <select id="filtroTipoFluxo" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-medium focus:ring-2 focus:ring-indigo-500">
               <option value="todos">Todos (Receitas e Despesas)</option>
               <option value="receita">Apenas Receitas (+)</option>
               <option value="despesa">Apenas Despesas (-)</option>
@@ -225,8 +351,8 @@
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Filtrar Modalidade</label>
-            <select id="filtroModalidade" onchange="renderizarInterface()" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-indigo-500">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Filtrar Modalidade</label>
+            <select id="filtroModalidade" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-medium focus:ring-2 focus:ring-indigo-500">
               <option value="todos">Todas as Modalidades</option>
               <option value="unico">⚡ Apenas Únicos</option>
               <option value="parcelado">🗓️ Apenas Parcelados</option>
@@ -235,705 +361,94 @@
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Ordenar por</label>
-            <select id="filtroOrdenacao" onchange="renderizarInterface()" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-indigo-500 font-medium">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Ordenar por</label>
+            <select id="filtroOrdenacao" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-indigo-500">
               <option value="data_desc">📅 Data (Mais recente primeiro)</option>
               <option value="data_asc">📅 Data (Mais antiga primeiro)</option>
-              <option value="valor_asc">💲 Valor (Crescente: Menor ao Maior)</option>
-              <option value="valor_desc">💲 Valor (Decrescente: Maior ao Menor)</option>
+              <option value="valor_asc">💲 Valor (Menor para Maior)</option>
+              <option value="valor_desc">💲 Valor (Maior para Menor)</option>
             </select>
           </div>
         </div>
       </div>
 
       <!-- Tabela de Lançamentos -->
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800/80">
         <table class="w-full text-left border-collapse text-sm">
           <thead>
-            <tr class="border-b text-slate-500 font-semibold text-xs">
-              <th class="py-2 px-3">Data</th>
-              <th class="py-2 px-3">Descrição</th>
-              <th class="py-2 px-3">Tipo</th>
-              <th class="py-2 px-3">Categoria</th>
-              <th class="py-2 px-3 text-right">Valor</th>
-              <th class="py-2 px-3 text-center">Ação</th>
+            <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-bold text-xs">
+              <th class="py-3 px-3">Data</th>
+              <th class="py-3 px-3">Descrição</th>
+              <th class="py-3 px-3">Tipo</th>
+              <th class="py-3 px-3">Categoria</th>
+              <th class="py-3 px-3 text-right">Valor</th>
+              <th class="py-3 px-3 text-center">Ação</th>
             </tr>
           </thead>
-          <tbody id="tabelaTransacoes" class="divide-y divide-slate-100"></tbody>
+          <tbody id="tabelaTransacoes" class="divide-y divide-slate-100 dark:divide-slate-800">
+            <!-- Inserido dinamicamente via JS com proteção anti-XSS -->
+          </tbody>
         </table>
       </div>
+
     </section>
 
   </main>
 
-  <!-- Modal Seletor de Relatório -->
-  <div id="modalRelatorio" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-base font-bold text-slate-900">📄 Exportar Relatório Financeiro</h3>
-        <button onclick="fecharModalRelatorio()" class="text-slate-400 hover:text-slate-700 text-lg">&times;</button>
+  <!-- Modal Seletor de Relatório PDF -->
+  <div id="modalRelatorio" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 transition-all">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-scaleIn">
+      <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📄</span>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">Exportar Relatório PDF</h3>
+        </div>
+        <button id="btnFecharModalRel" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xl font-bold">&times;</button>
       </div>
 
       <div class="space-y-3">
-        <label class="block text-xs font-semibold uppercase text-slate-500">Escolha o formato do relatório:</label>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Escolha o formato:</label>
         
-        <label class="flex items-start gap-3 p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition">
+        <label class="flex items-start gap-3 p-3.5 border border-slate-200 dark:border-slate-800 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
           <input type="radio" name="tipoRelatorio" value="mensal" checked class="mt-1 text-indigo-600 focus:ring-indigo-500">
           <div>
-            <div class="text-sm font-semibold text-slate-800">Extrato Mensal Detalhado</div>
-            <div class="text-xs text-slate-500">Balanço, resumo de categorias e lista de lançamentos do mês selecionado.</div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white">Extrato Mensal Detalhado</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Balanço do mês, participação de categorias e extrato completo.</div>
           </div>
         </label>
 
-        <label class="flex items-start gap-3 p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition">
+        <label class="flex items-start gap-3 p-3.5 border border-slate-200 dark:border-slate-800 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
           <input type="radio" name="tipoRelatorio" value="anual" class="mt-1 text-indigo-600 focus:ring-indigo-500">
           <div>
-            <div class="text-sm font-semibold text-slate-800">Consolidado Anual (Lista de Meses)</div>
-            <div class="text-xs text-slate-500">Tabela comparativa mês a mês de Receitas, Despesas e Saldo do ano selecionado.</div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white">Demonstrativo Anual Consolidado</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Comparativo mês a mês (Jan a Dez) com receitas, despesas e saldo anual.</div>
           </div>
         </label>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2 border-t">
-        <button onclick="fecharModalRelatorio()" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <button id="btnCancelarRel" class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">
           Cancelar
         </button>
-        <button onclick="gerarPDF()" class="px-4 py-2 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition shadow-sm flex items-center gap-1">
-          📥 Baixar em PDF
+        <button id="btnConfirmarPdf" class="px-4 py-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition shadow-md shadow-emerald-900/20 flex items-center gap-1.5">
+          <span>📥</span> Baixar Relatório em PDF
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Contêiner do Relatório para Impressão e PDF -->
+  <!-- Contêiner Oculto para Impressão e PDF -->
   <div id="containerRelatorioPrint" class="hidden">
-    <div id="areaImpressaoRelatorio" class="p-8 bg-white text-slate-900 font-sans text-xs leading-relaxed max-w-[800px] mx-auto"></div>
+    <div id="areaImpressaoRelatorio"></div>
   </div>
 
-  <script>
-    let transacoes = JSON.parse(localStorage.getItem('financas_app_dados')) || [];
-    let meuGrafico = null;
-
-    const nomesMeses = [
-      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ];
-
-    const hoje = new Date();
-    document.getElementById('data').valueAsDate = hoje;
-
-    const selectAno = document.getElementById('filtroAno');
-    const anoAtual = hoje.getFullYear();
-    for (let a = anoAtual - 2; a <= anoAtual + 3; a++) {
-      const opt = document.createElement('option');
-      opt.value = a;
-      opt.innerText = a;
-      if (a === anoAtual) opt.selected = true;
-      selectAno.appendChild(opt);
-    }
-    document.getElementById('filtroMes').value = hoje.getMonth();
-
-    function ajustarCamposFrequencia() {
-      const freq = document.getElementById('frequencia').value;
-      const campoParcelas = document.getElementById('campoParcelas');
-      const campoRecorrencia = document.getElementById('campoRecorrencia');
-      const labelValor = document.getElementById('labelValor');
-
-      campoParcelas.classList.add('hidden');
-      campoRecorrencia.classList.add('hidden');
-
-      if (freq === 'parcelado') {
-        campoParcelas.classList.remove('hidden');
-        labelValor.innerText = 'Valor Total da Compra (R$)';
-      } else if (freq === 'recorrente') {
-        campoRecorrencia.classList.remove('hidden');
-        labelValor.innerText = 'Valor Mensal (R$)';
-      } else {
-        labelValor.innerText = 'Valor (R$)';
-      }
-    }
-
-    const form = document.getElementById('formTransacao');
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const descBase = document.getElementById('desc').value.trim();
-      const valorTotal = parseFloat(document.getElementById('valor').value);
-      const tipo = document.getElementById('tipo').value;
-      const frequencia = document.getElementById('frequencia').value;
-      const categoria = document.getElementById('categoria').value;
-      const dataStr = document.getElementById('data').value;
-      
-      const groupId = Date.now();
-      const partesData = dataStr.split('-');
-      const anoOrig = parseInt(partesData[0]);
-      const mesOrig = parseInt(partesData[1]) - 1;
-      const diaOrig = parseInt(partesData[2]);
-
-      if (frequencia === 'unico') {
-        transacoes.unshift({
-          id: Date.now(),
-          desc: descBase,
-          valor: valorTotal,
-          tipo,
-          frequencia,
-          categoria,
-          data: dataStr
-        });
-      } else if (frequencia === 'parcelado') {
-        const parcelas = parseInt(document.getElementById('numParcelas').value) || 2;
-        const valorParcela = parseFloat((valorTotal / parcelas).toFixed(2));
-
-        for (let i = 0; i < parcelas; i++) {
-          const d = new Date(anoOrig, mesOrig + i, diaOrig);
-          transacoes.push({
-            id: Date.now() + i,
-            groupId,
-            desc: `${descBase} (${i + 1}/${parcelas})`,
-            valor: valorParcela,
-            tipo,
-            frequencia,
-            categoria,
-            data: d.toISOString().split('T')[0]
-          });
-        }
-      } else if (frequencia === 'recorrente') {
-        const meses = parseInt(document.getElementById('mesesRecorrencia').value) || 12;
-
-        for (let i = 0; i < meses; i++) {
-          const d = new Date(anoOrig, mesOrig + i, diaOrig);
-          transacoes.push({
-            id: Date.now() + i,
-            groupId,
-            desc: descBase,
-            valor: valorTotal,
-            tipo,
-            frequencia,
-            categoria,
-            data: d.toISOString().split('T')[0]
-          });
-        }
-      }
-
-      salvarEAtualizar();
-      form.reset();
-      document.getElementById('data').valueAsDate = new Date();
-      ajustarCamposFrequencia();
-    });
-
-    function removerTransacao(id, groupId) {
-      if (groupId) {
-        const opcao = confirm("Essa transação faz parte de um grupo recorrente/parcelado.\n\nClique em OK para excluir TODAS as parcelas deste grupo, ou CANCELAR para excluir apenas esta.");
-        if (opcao) {
-          transacoes = transacoes.filter(t => t.groupId !== groupId);
-        } else {
-          transacoes = transacoes.filter(t => t.id !== id);
-        }
-      } else {
-        transacoes = transacoes.filter(t => t.id !== id);
-      }
-      salvarEAtualizar();
-    }
-
-    function limparTudo() {
-      if (confirm('Deseja realmente apagar todos os registros salvos?')) {
-        transacoes = [];
-        salvarEAtualizar();
-      }
-    }
-
-    function exportarBackup() {
-      if (transacoes.length === 0) {
-        alert('Não há dados cadastrados para exportar.');
-        return;
-      }
-      const dataStrBackup = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transacoes, null, 2));
-      const downloadAnchor = document.createElement('a');
-      const dataHoje = new Date().toISOString().split('T')[0];
-      downloadAnchor.setAttribute("href", dataStrBackup);
-      downloadAnchor.setAttribute("download", `financas_backup_${dataHoje}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    }
-
-    function importarBackup(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const dadosImportados = JSON.parse(e.target.result);
-          if (!Array.isArray(dadosImportados)) {
-            throw new Error("Formato inválido.");
-          }
-
-          const substituir = confirm(
-            `Arquivo carregado contendo ${dadosImportados.length} lançamentos.\n\n` +
-            `Deseja SUBSTITUIR os dados atuais (OK) ou MESCLAR (CANCELAR)?`
-          );
-
-          if (substituir) {
-            transacoes = dadosImportados;
-          } else {
-            const idsExistentes = new Set(transacoes.map(t => t.id));
-            const novosItens = dadosImportados.filter(t => !idsExistentes.has(t.id));
-            transacoes = [...transacoes, ...novosItens];
-          }
-
-          salvarEAtualizar();
-          alert('Dados restaurados com sucesso!');
-        } catch (err) {
-          alert('Erro ao importar arquivo JSON de backup.');
-        } finally {
-          event.target.value = '';
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function salvarEAtualizar() {
-      localStorage.setItem('financas_app_dados', JSON.stringify(transacoes));
-      renderizarInterface();
-    }
-
-    function formatarMoeda(valor) {
-      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    function limparBuscaTexto() {
-      document.getElementById('campoBuscaTexto').value = '';
-      renderizarInterface();
-    }
-
-    function renderizarInterface() {
-      const mesFiltro = parseInt(document.getElementById('filtroMes').value);
-      const anoFiltro = parseInt(document.getElementById('filtroAno').value);
-
-      // Todos os lançamentos do mês selecionado
-      const transacoesMes = transacoes.filter(t => {
-        const d = new Date(t.data + 'T00:00:00');
-        return d.getMonth() === mesFiltro && d.getFullYear() === anoFiltro;
-      });
-
-      let receitas = 0;
-      let despesas = 0;
-      const gastosPorCategoria = {};
-
-      transacoesMes.forEach(t => {
-        if (t.tipo === 'receita') {
-          receitas += t.valor;
-        } else {
-          despesas += t.valor;
-          gastosPorCategoria[t.categoria] = (gastosPorCategoria[t.categoria] || 0) + t.valor;
-        }
-      });
-
-      // Filtros do extrato
-      const filtroFluxo = document.getElementById('filtroTipoFluxo').value;
-      const filtroMod = document.getElementById('filtroModalidade').value;
-      const filtroOrd = document.getElementById('filtroOrdenacao').value;
-      const termoBusca = (document.getElementById('campoBuscaTexto').value || '').trim().toLowerCase();
-
-      let listaFiltrada = transacoesMes.filter(t => {
-        const matchFluxo = (filtroFluxo === 'todos') || (t.tipo === filtroFluxo);
-        const matchModalidade = (filtroMod === 'todos') || (t.frequencia === filtroMod);
-        
-        // Busca textual por descrição ou categoria
-        const descMatch = (t.desc || '').toLowerCase().includes(termoBusca);
-        const catMatch = (t.categoria || '').toLowerCase().includes(termoBusca);
-        const matchTexto = termoBusca === '' || descMatch || catMatch;
-
-        return matchFluxo && matchModalidade && matchTexto;
-      });
-
-      // Ordenação
-      listaFiltrada.sort((a, b) => {
-        if (filtroOrd === 'data_desc') {
-          return new Date(b.data) - new Date(a.data);
-        } else if (filtroOrd === 'data_asc') {
-          return new Date(a.data) - new Date(b.data);
-        } else if (filtroOrd === 'valor_asc') {
-          return a.valor - b.valor;
-        } else if (filtroOrd === 'valor_desc') {
-          return b.valor - a.valor;
-        }
-        return 0;
-      });
-
-      const tabela = document.getElementById('tabelaTransacoes');
-      tabela.innerHTML = '';
-
-      if (listaFiltrada.length === 0) {
-        tabela.innerHTML = `
-          <tr>
-            <td colspan="6" class="py-6 text-center text-slate-400 text-xs">
-              Nenhum lançamento encontrado para os filtros e busca aplicados.
-            </td>
-          </tr>
-        `;
-      } else {
-        listaFiltrada.forEach(t => {
-          let badgeTipo = '';
-          if (t.frequencia === 'parcelado') {
-            badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Parcelado</span>';
-          } else if (t.frequencia === 'recorrente') {
-            badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Recorrente</span>';
-          } else {
-            badgeTipo = '<span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">Único</span>';
-          }
-
-          const tr = document.createElement('tr');
-          tr.className = 'hover:bg-slate-50 transition text-slate-700';
-          tr.innerHTML = `
-            <td class="py-2.5 px-3 text-xs text-slate-500 whitespace-nowrap">${t.data.split('-').reverse().join('/')}</td>
-            <td class="py-2.5 px-3 font-medium">${t.desc}</td>
-            <td class="py-2.5 px-3 whitespace-nowrap">${badgeTipo}</td>
-            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">${t.categoria}</span></td>
-            <td class="py-2.5 px-3 text-right font-semibold whitespace-nowrap ${t.tipo === 'receita' ? 'text-emerald-600' : 'text-rose-600'}">
-              ${t.tipo === 'receita' ? '+' : '-'} ${formatarMoeda(t.valor)}
-            </td>
-            <td class="py-2.5 px-3 text-center">
-              <button onclick="removerTransacao(${t.id}, ${t.groupId || 'null'})" title="Excluir lançamento" class="text-slate-400 hover:text-rose-600 font-bold px-2 py-1 text-sm transition">
-                &times;
-              </button>
-            </td>
-          `;
-          tabela.appendChild(tr);
-        });
-      }
-
-      // Cards de Resumo do Mês
-      const saldo = receitas - despesas;
-      document.getElementById('totalReceitas').innerText = formatarMoeda(receitas);
-      document.getElementById('totalDespesas').innerText = formatarMoeda(despesas);
-      
-      const saldoEl = document.getElementById('saldoTotal');
-      saldoEl.innerText = formatarMoeda(saldo);
-      saldoEl.className = `text-2xl font-bold mt-1 ${saldo >= 0 ? 'text-slate-900' : 'text-rose-600'}`;
-
-      document.getElementById('contadorItens').innerText = `${listaFiltrada.length} de ${transacoesMes.length} lançamentos`;
-
-      atualizarGrafico(gastosPorCategoria);
-    }
-
-    function atualizarGrafico(dadosCategorias) {
-      const labels = Object.keys(dadosCategorias);
-      const data = Object.values(dadosCategorias);
-
-      if (meuGrafico) {
-        meuGrafico.destroy();
-      }
-
-      const ctx = document.getElementById('graficoCategorias').getContext('2d');
-
-      if (labels.length === 0) {
-        meuGrafico = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: ['Sem despesas no mês'],
-            datasets: [{ data: [1], backgroundColor: ['#E2E8F0'] }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { tooltip: { enabled: false }, legend: { display: false } }
-          }
-        });
-        return;
-      }
-
-      meuGrafico = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: data,
-            backgroundColor: [
-              '#EF4444', '#3B82F6', '#10B981', '#F59E0B', 
-              '#8B5CF6', '#EC4899', '#14B8A6', '#6366F1', '#6B7280'
-            ]
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
-          }
-        }
-      });
-    }
-
-    function abrirModalRelatorio() {
-      document.getElementById('modalRelatorio').classList.remove('hidden');
-    }
-
-    function fecharModalRelatorio() {
-      document.getElementById('modalRelatorio').classList.add('hidden');
-    }
-
-    function gerarPDF() {
-      const formato = document.querySelector('input[name="tipoRelatorio"]:checked').value;
-      const mesFiltro = parseInt(document.getElementById('filtroMes').value);
-      const anoFiltro = parseInt(document.getElementById('filtroAno').value);
-      const container = document.getElementById('areaImpressaoRelatorio');
-
-      let htmlRelatorio = '';
-      let nomeArquivo = '';
-
-      const emissaoEm = new Date().toLocaleDateString('pt-BR', {
-        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-      });
-
-      if (formato === 'mensal') {
-        nomeArquivo = `Extrato_Mensal_${nomesMeses[mesFiltro]}_${anoFiltro}.pdf`;
-
-        const transacoesMes = transacoes.filter(t => {
-          const d = new Date(t.data + 'T00:00:00');
-          return d.getMonth() === mesFiltro && d.getFullYear() === anoFiltro;
-        });
-
-        transacoesMes.sort((a, b) => new Date(a.data) - new Date(b.data));
-
-        let totRec = 0;
-        let totDesp = 0;
-        const categoriasMap = {};
-
-        transacoesMes.forEach(t => {
-          if (t.tipo === 'receita') {
-            totRec += t.valor;
-          } else {
-            totDesp += t.valor;
-            categoriasMap[t.categoria] = (categoriasMap[t.categoria] || 0) + t.valor;
-          }
-        });
-
-        const saldoFinal = totRec - totDesp;
-
-        htmlRelatorio = `
-          <div style="font-family: Arial, sans-serif; color: #1e293b; padding: 20px;">
-            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px;">
-              <div>
-                <h1 style="font-size: 20px; font-weight: bold; margin: 0; color: #4f46e5;">RELATÓRIO FINANCEIRO MENSAL</h1>
-                <p style="margin: 4px 0 0; font-size: 13px; color: #64748b;">Competência: <strong>${nomesMeses[mesFiltro]} de ${anoFiltro}</strong></p>
-              </div>
-              <div style="text-align: right; font-size: 11px; color: #94a3b8;">
-                <p style="margin: 0;">Emissão: ${emissaoEm}</p>
-                <p style="margin: 2px 0 0;">Status: Consolidado</p>
-              </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
-              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; text-align: center;">
-                <span style="font-size: 10px; font-weight: bold; color: #10b981; text-transform: uppercase;">Total de Receitas</span>
-                <div style="font-size: 16px; font-weight: bold; margin-top: 4px; color: #047857;">${formatarMoeda(totRec)}</div>
-              </div>
-              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; text-align: center;">
-                <span style="font-size: 10px; font-weight: bold; color: #ef4444; text-transform: uppercase;">Total de Despesas</span>
-                <div style="font-size: 16px; font-weight: bold; margin-top: 4px; color: #b91c1c;">${formatarMoeda(totDesp)}</div>
-              </div>
-              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; text-align: center;">
-                <span style="font-size: 10px; font-weight: bold; color: #475569; text-transform: uppercase;">Saldo Líquido</span>
-                <div style="font-size: 16px; font-weight: bold; margin-top: 4px; color: ${saldoFinal >= 0 ? '#1e293b' : '#b91c1c'};">${formatarMoeda(saldoFinal)}</div>
-              </div>
-            </div>
-
-            <div style="margin-bottom: 24px;">
-              <h2 style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #334155; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
-                Resumo de Gastos por Categoria
-              </h2>
-              <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                <thead>
-                  <tr style="background-color: #f1f5f9; text-align: left; color: #475569;">
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0;">Categoria</th>
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right;">Total Gasto</th>
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right;">% do Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${Object.keys(categoriasMap).length > 0 ? Object.entries(categoriasMap).map(([cat, val]) => `
-                    <tr>
-                      <td style="padding: 6px 8px; border: 1px solid #e2e8f0;">${cat}</td>
-                      <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right; font-weight: bold;">${formatarMoeda(val)}</td>
-                      <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right; color: #64748b;">${totDesp > 0 ? ((val / totDesp) * 100).toFixed(1) + '%' : '0%'}</td>
-                    </tr>
-                  `).join('') : `
-                    <tr>
-                      <td colspan="3" style="padding: 8px; text-align: center; color: #94a3b8; border: 1px solid #e2e8f0;">Nenhuma despesa registrada neste período.</td>
-                    </tr>
-                  `}
-                </tbody>
-              </table>
-            </div>
-
-            <div>
-              <h2 style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #334155; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
-                Extrato Analítico dos Lançamentos (${transacoesMes.length})
-              </h2>
-              <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
-                <thead>
-                  <tr style="background-color: #f1f5f9; text-align: left; color: #475569;">
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0;">Data</th>
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0;">Descrição</th>
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0;">Tipo</th>
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0;">Categoria</th>
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right;">Valor</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${transacoesMes.length > 0 ? transacoesMes.map(t => `
-                    <tr>
-                      <td style="padding: 5px 8px; border: 1px solid #e2e8f0; white-space: nowrap;">${t.data.split('-').reverse().join('/')}</td>
-                      <td style="padding: 5px 8px; border: 1px solid #e2e8f0;">${t.desc}</td>
-                      <td style="padding: 5px 8px; border: 1px solid #e2e8f0; text-transform: capitalize;">${t.frequencia}</td>
-                      <td style="padding: 5px 8px; border: 1px solid #e2e8f0;">${t.categoria}</td>
-                      <td style="padding: 5px 8px; border: 1px solid #e2e8f0; text-align: right; font-weight: bold; color: ${t.tipo === 'receita' ? '#047857' : '#b91c1c'};">
-                        ${t.tipo === 'receita' ? '+' : '-'}${formatarMoeda(t.valor)}
-                      </td>
-                    </tr>
-                  `).join('') : `
-                    <tr>
-                      <td colspan="5" style="padding: 10px; text-align: center; color: #94a3b8; border: 1px solid #e2e8f0;">Nenhuma movimentação registrada no mês selecionado.</td>
-                    </tr>
-                  `}
-                </tbody>
-              </table>
-            </div>
-
-            <div style="margin-top: 30px; border-top: 1px dashed #cbd5e1; padding-top: 10px; display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8;">
-              <span>Documento gerado automaticamente pelo aplicativo Minhas Finanças</span>
-              <span>Página 1 de 1</span>
-            </div>
-          </div>
-        `;
-      } else {
-        nomeArquivo = `Demonstrativo_Anual_${anoFiltro}.pdf`;
-
-        const dadosMeses = [];
-        let anoRec = 0;
-        let anoDesp = 0;
-
-        for (let m = 0; m < 12; m++) {
-          const transMes = transacoes.filter(t => {
-            const d = new Date(t.data + 'T00:00:00');
-            return d.getMonth() === m && d.getFullYear() === anoFiltro;
-          });
-
-          let rec = 0;
-          let desp = 0;
-          transMes.forEach(t => {
-            if (t.tipo === 'receita') rec += t.valor;
-            else desp += t.valor;
-          });
-
-          anoRec += rec;
-          anoDesp += desp;
-
-          dadosMeses.push({
-            mesNome: nomesMeses[m],
-            receitas: rec,
-            despesas: desp,
-            saldo: rec - desp
-          });
-        }
-
-        const saldoAnual = anoRec - anoDesp;
-
-        htmlRelatorio = `
-          <div style="font-family: Arial, sans-serif; color: #1e293b; padding: 20px;">
-            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px;">
-              <div>
-                <h1 style="font-size: 20px; font-weight: bold; margin: 0; color: #4f46e5;">DEMONSTRATIVO ANUAL CONSOLIDADO</h1>
-                <p style="margin: 4px 0 0; font-size: 13px; color: #64748b;">Exercício: <strong>Ano de ${anoFiltro}</strong></p>
-              </div>
-              <div style="text-align: right; font-size: 11px; color: #94a3b8;">
-                <p style="margin: 0;">Emissão: ${emissaoEm}</p>
-                <p style="margin: 2px 0 0;">Tipo: Análise Mensal</p>
-              </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
-              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; text-align: center;">
-                <span style="font-size: 10px; font-weight: bold; color: #10b981; text-transform: uppercase;">Receitas Acumuladas</span>
-                <div style="font-size: 16px; font-weight: bold; margin-top: 4px; color: #047857;">${formatarMoeda(anoRec)}</div>
-              </div>
-              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; text-align: center;">
-                <span style="font-size: 10px; font-weight: bold; color: #ef4444; text-transform: uppercase;">Despesas Acumuladas</span>
-                <div style="font-size: 16px; font-weight: bold; margin-top: 4px; color: #b91c1c;">${formatarMoeda(anoDesp)}</div>
-              </div>
-              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; text-align: center;">
-                <span style="font-size: 10px; font-weight: bold; color: #475569; text-transform: uppercase;">Resultado Líquido do Ano</span>
-                <div style="font-size: 16px; font-weight: bold; margin-top: 4px; color: ${saldoAnual >= 0 ? '#1e293b' : '#b91c1c'};">${formatarMoeda(saldoAnual)}</div>
-              </div>
-            </div>
-
-            <div>
-              <h2 style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #334155; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
-                Detalhamento Mensal (Janeiro a Dezembro)
-              </h2>
-              <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
-                <thead>
-                  <tr style="background-color: #f1f5f9; text-align: left; color: #475569;">
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0;">Mês</th>
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right;">Receitas (+)</th>
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right;">Despesas (-)</th>
-                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right;">Resultado Líquido</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${dadosMeses.map(d => `
-                    <tr style="${(d.receitas === 0 && d.despesas === 0) ? 'color: #94a3b8;' : ''}">
-                      <td style="padding: 5px 8px; border: 1px solid #e2e8f0; font-weight: 600;">${d.mesNome}</td>
-                      <td style="padding: 5px 8px; border: 1px solid #e2e8f0; text-align: right; color: #047857;">${formatarMoeda(d.receitas)}</td>
-                      <td style="padding: 5px 8px; border: 1px solid #e2e8f0; text-align: right; color: #b91c1c;">${formatarMoeda(d.despesas)}</td>
-                      <td style="padding: 5px 8px; border: 1px solid #e2e8f0; text-align: right; font-weight: bold; color: ${d.saldo >= 0 ? '#1e293b' : '#b91c1c'};">
-                        ${formatarMoeda(d.saldo)}
-                      </td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-                <tfoot>
-                  <tr style="background-color: #f8fafc; font-weight: bold; border-top: 2px solid #cbd5e1;">
-                    <td style="padding: 6px 8px; border: 1px solid #e2e8f0;">TOTAL GERAL</td>
-                    <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right; color: #047857;">${formatarMoeda(anoRec)}</td>
-                    <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right; color: #b91c1c;">${formatarMoeda(anoDesp)}</td>
-                    <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right; color: ${saldoAnual >= 0 ? '#1e293b' : '#b91c1c'};">
-                      ${formatarMoeda(saldoAnual)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            <div style="margin-top: 30px; border-top: 1px dashed #cbd5e1; padding-top: 10px; display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8;">
-              <span>Documento gerado automaticamente pelo aplicativo Minhas Finanças</span>
-              <span>Página 1 de 1</span>
-            </div>
-          </div>
-        `;
-      }
-
-      container.innerHTML = htmlRelatorio;
-      fecharModalRelatorio();
-
-      const opt = {
-        margin: [10, 10, 10, 10],
-        filename: nomeArquivo,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(opt).from(container).save().then(() => {
-        container.innerHTML = '';
-      });
-    }
-
-    // Inicialização
-    ajustarCamposFrequencia();
-    renderizarInterface();
-  </script>
+  <!-- Scripts Modulares -->
+  <script src="js/utils.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/calculations.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
