@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minhas Finanças</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-12">
+
+  <!-- Top Bar -->
+  <header class="bg-indigo-600 text-white shadow">
+    <div class="max-w-4xl mx-auto px-4 py-5 flex justify-between items-center">
+      <h1 class="text-xl font-bold tracking-tight">💰 Finanças Pessoais</h1>
+      <button onclick="limparTudo()" class="text-xs bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded transition">
+        Resetar Dados
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
+
+    <!-- Cards de Resumo -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Saldo Atual</span>
+        <p id="saldoTotal" class="text-2xl font-bold mt-1 text-slate-900">R$ 0,00</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Receitas</span>
+        <p id="totalReceitas" class="text-2xl font-bold mt-1 text-emerald-600">R$ 0,00</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <span class="text-xs font-semibold uppercase tracking-wider text-rose-600">Despesas</span>
+        <p id="totalDespesas" class="text-2xl font-bold mt-1 text-rose-600">R$ 0,00</p>
+      </div>
+    </div>
+
+    <!-- Grid: Formulário + Gráfico -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- Formulário de Transação -->
+      <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="text-base font-bold text-slate-800 mb-4">Adicionar Transação</h2>
+        <form id="formTransacao" class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Descrição</label>
+            <input type="text" id="desc" placeholder="Ex: Mercado, Salário" required
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Valor (R$)</label>
+              <input type="number" id="valor" step="0.01" min="0.01" placeholder="0,00" required
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Tipo</label>
+              <select id="tipo" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm bg-white">
+                <option value="despesa">Despesa</option>
+                <option value="receita">Receita</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Categoria</label>
+              <select id="categoria" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm bg-white">
+                <option value="Alimentação">Alimentação</option>
+                <option value="Moradia">Moradia</option>
+                <option value="Transporte">Transporte</option>
+                <option value="Lazer">Lazer</option>
+                <option value="Saúde">Saúde</option>
+                <option value="Salário">Salário</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Data</label>
+              <input type="date" id="data" required
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+            </div>
+          </div>
+
+          <button type="submit"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm transition">
+            Registrar Lançamento
+          </button>
+        </form>
+      </section>
+
+      <!-- Gráfico de Gastos -->
+      <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center justify-center">
+        <h2 class="text-base font-bold text-slate-800 mb-2 w-full text-left">Distribuição de Despesas</h2>
+        <div class="w-full h-56 flex items-center justify-center">
+          <canvas id="graficoCategorias"></canvas>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Extrato -->
+    <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-base font-bold text-slate-800">Histórico de Transações</h2>
+        <span id="contadorItens" class="text-xs text-slate-500">0 lançamentos</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="border-b text-slate-500 font-semibold text-xs">
+              <th class="py-2 px-3">Data</th>
+              <th class="py-2 px-3">Descrição</th>
+              <th class="py-2 px-3">Categoria</th>
+              <th class="py-2 px-3 text-right">Valor</th>
+              <th class="py-2 px-3 text-center">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaTransacoes" class="divide-y divide-slate-100">
+            <!-- Linhas geradas via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Inicialização do estado
+    let transacoes = JSON.parse(localStorage.getItem('financas_app_dados')) || [];
+    let meuGrafico = null;
+
+    // Data de hoje como padrão no formulário
+    document.getElementById('data').valueAsDate = new Date();
+
+    const form = document.getElementById('formTransacao');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const novaTransacao = {
+        id: Date.now(),
+        desc: document.getElementById('desc').value.trim(),
+        valor: parseFloat(document.getElementById('valor').value),
+        tipo: document.getElementById('tipo').value,
+        categoria: document.getElementById('categoria').value,
+        data: document.getElementById('data').value
+      };
+
+      transacoes.unshift(novaTransacao);
+      salvarEAtualizar();
+      form.reset();
+      document.getElementById('data').valueAsDate = new Date();
+    });
+
+    function removerTransacao(id) {
+      transacoes = transacoes.filter(t => t.id !== id);
+      salvarEAtualizar();
+    }
+
+    function limparTudo() {
+      if (confirm('Deseja realmente apagar todos os registros salvos?')) {
+        transacoes = [];
+        salvarEAtualizar();
+      }
+    }
+
+    function salvarEAtualizar() {
+      localStorage.setItem('financas_app_dados', JSON.stringify(transacoes));
+      renderizarInterface();
+    }
+
+    function formatarMoeda(valor) {
+      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function renderizarInterface() {
+      const tabela = document.getElementById('tabelaTransacoes');
+      tabela.innerHTML = '';
+
+      let receitas = 0;
+      let despesas = 0;
+      const gastosPorCategoria = {};
+
+      transacoes.forEach(t => {
+        if (t.tipo === 'receita') {
+          receitas += t.valor;
+        } else {
+          despesas += t.valor;
+          gastosPorCategoria[t.categoria] = (gastosPorCategoria[t.categoria] || 0) + t.valor;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition text-slate-700';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-xs text-slate-500 whitespace-nowrap">${t.data.split('-').reverse().join('/')}</td>
+          <td class="py-2.5 px-3 font-medium">${t.desc}</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">${t.categoria}</span></td>
+          <td class="py-2.5 px-3 text-right font-semibold whitespace-nowrap ${t.tipo === 'receita' ? 'text-emerald-600' : 'text-rose-600'}">
+            ${t.tipo === 'receita' ? '+' : '-'} ${formatarMoeda(t.valor)}
+          </td>
+          <td class="py-2.5 px-3 text-center">
+            <button onclick="removerTransacao(${t.id})" class="text-slate-400 hover:text-rose-600 font-bold px-2 py-1 text-sm transition">
+              &times;
+            </button>
+          </td>
+        `;
+        tabela.appendChild(tr);
+      });
+
+      // Atualiza Cards
+      const saldo = receitas - despesas;
+      document.getElementById('totalReceitas').innerText = formatarMoeda(receitas);
+      document.getElementById('totalDespesas').innerText = formatarMoeda(despesas);
+      
+      const saldoEl = document.getElementById('saldoTotal');
+      saldoEl.innerText = formatarMoeda(saldo);
+      saldoEl.className = `text-2xl font-bold mt-1 ${saldo >= 0 ? 'text-slate-900' : 'text-rose-600'}`;
+
+      document.getElementById('contadorItens').innerText = `${transacoes.length} ${transacoes.length === 1 ? 'lançamento' : 'lançamentos'}`;
+
+      // Atualiza Gráfico
+      atualizarGrafico(gastosPorCategoria);
+    }
+
+    function atualizarGrafico(dadosCategorias) {
+      const labels = Object.keys(dadosCategorias);
+      const data = Object.values(dadosCategorias);
+
+      if (meuGrafico) {
+        meuGrafico.destroy();
+      }
+
+      const ctx = document.getElementById('graficoCategorias').getContext('2d');
+
+      if (labels.length === 0) {
+        meuGrafico = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Sem despesas'],
+            datasets: [{ data: [1], backgroundColor: ['#E2E8F0'] }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { tooltip: { enabled: false }, legend: { display: false } }
+          }
+        });
+        return;
+      }
+
+      meuGrafico = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: [
+              '#EF4444', '#3B82F6', '#10B981', '#F59E0B', 
+              '#8B5CF6', '#EC4899', '#6B7280'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // Renderização inicial ao abrir a página
+    renderizarInterface();
+  </script>
+</body>
+</html>
